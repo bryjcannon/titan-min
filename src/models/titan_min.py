@@ -79,9 +79,10 @@ class TitanBlock(nn.Module):
             self.k_conv = nn.Identity()
             self.v_conv = nn.Identity()
         
-        # Gate mechanism
+        # Modern gating mechanism (Mehta et al. 2023 style)
         self.gate_norm = nn.LayerNorm(dim)
-        self.gate_linear = nn.Linear(dim, dim)
+        self.gate_proj = nn.Linear(dim, dim * 2, bias=False)  # Projects to 2x for gating
+        self.gate_activation = nn.SiLU()  # SwiGLU-style activation
         
         # Output projection
         self.out_proj = nn.Linear(dim, dim)
@@ -132,10 +133,15 @@ class TitanBlock(nn.Module):
         # Residual connection around attention
         attn_out = attn_out + residual
         
-        # Gate mechanism: LayerNorm + linear gate (sigmoid) * normalized activations
+        # Modern gating mechanism: LayerNorm + SwiGLU-style gating before output projection
         normalized = self.gate_norm(attn_out)
-        gate = torch.sigmoid(self.gate_linear(normalized))
-        gated = gate * normalized
+        gate_proj = self.gate_proj(normalized)  # [B, L, 2*C]
+        
+        # Split into value and gate components
+        value, gate = gate_proj.chunk(2, dim=-1)  # Each [B, L, C]
+        
+        # SwiGLU-style gating: value * SiLU(gate)
+        gated = value * self.gate_activation(gate)
         
         # Final output projection
         out = self.out_proj(gated)
