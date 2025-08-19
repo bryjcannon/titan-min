@@ -385,21 +385,19 @@ class TitanLongTermMemory(nn.Module):
         """
         B, seg_len, C = segment.shape
         
-        # Step 1: Generate queries from current segment (q_t = S^(t) * W_Q)
+        # Step 1: Generate queries from current segment (q_t = x_t W_Q)
         queries = self.query_proj(segment)  # [B, seg_len, C]
         
-        # Step 2: Retrieve from long-term memory M_{t-1} using queries
-        if len(self.memory_buffer) > 0:
-            # Concatenate past memory segments (this is M_{t-1})
-            past_memory = torch.cat(list(self.memory_buffer), dim=1)  # [B, past_len, C]
-            
-            # Retrieve relevant historical information
-            retrieved_memory, _ = self.memory_attention(
-                queries, past_memory, past_memory
-            )  # [B, seg_len, C]
-        else:
-            # No past memory available, use zeros
-            retrieved_memory = torch.zeros_like(segment)  # [B, seg_len, C]
+        # Step 2: Retrieve from long-term memory using paper's specification: y_t = M*(q_t)
+        # Use the trained memory network to directly process queries
+        B, seg_len, C = queries.shape
+        queries_flat = queries.view(-1, C)  # [B*seg_len, C]
+        
+        # Direct retrieval using memory network: y_t = M*(q_t)
+        with torch.no_grad():  # Memory retrieval doesn't update memory weights
+            retrieved_flat = self.memory_module(queries_flat)  # [B*seg_len, C]
+        
+        retrieved_memory = retrieved_flat.view(B, seg_len, C)  # [B, seg_len, C]
         
         # Step 3: Assemble context as [persistent_memory, retrieved_memory, current_segment]
         persistent_expanded = self.persistent_memory.expand(B, -1, -1)  # [B, n_persistent, C]
