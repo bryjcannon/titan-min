@@ -1,0 +1,5 @@
+torch>=2.2
+einops>=0.7
+numpy
+matplotlib
+tqdm
