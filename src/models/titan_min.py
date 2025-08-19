@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 from typing import Tuple
+from .titan_memory import TitanLongTermMemory
 
 
 class DepthwiseSeparable1D(nn.Module):
@@ -142,49 +143,7 @@ class TitanBlock(nn.Module):
         return out
 
 
-class MemoryPrefix(nn.Module):
-    """Memory prefix module with EMA writeback."""
-    
-    def __init__(self, dim: int, n_slots: int = 4, beta: float = 0.1):
-        super().__init__()
-        self.dim = dim
-        self.n_slots = n_slots
-        self.beta = beta
-        
-        # Learnable memory parameters [1, n_slots, dim]
-        self.mem = nn.Parameter(torch.randn(1, n_slots, dim) * 0.02)
-        
-        # MLP for EMA writeback
-        self.mlp = nn.Sequential(
-            nn.Linear(dim, dim * 2),
-            nn.ReLU(),
-            nn.Linear(dim * 2, dim)
-        )
-        
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass with EMA writeback. x: [B, L, C] -> [B, n_slots + L, C]"""
-        B, L, C = x.shape
-        
-        # Expand memory to batch size
-        mem_expanded = self.mem.expand(B, -1, -1)  # [B, n_slots, C]
-        
-        # Concatenate memory in front of tokens
-        x_with_mem = torch.cat([mem_expanded, x], dim=1)  # [B, n_slots + L, C]
-        
-        # EMA writeback (no grad)
-        if self.training:
-            with torch.no_grad():
-                # Compute mean over sequence dimension (excluding memory slots)
-                x_mean = x.mean(dim=1)  # [B, C]
-                
-                # Apply MLP and take mean over batch
-                mlp_out = self.mlp(x_mean)  # [B, C]
-                batch_mean = mlp_out.mean(dim=0, keepdim=True).unsqueeze(0)  # [1, 1, C]
-                
-                # EMA update
-                self.mem.data = (1 - self.beta) * self.mem.data + self.beta * batch_mean
-        
-        return x_with_mem
+# Old MemoryPrefix removed - replaced with TitanLongTermMemory
 
 
 class TitanClassifier(nn.Module):
@@ -213,11 +172,16 @@ class TitanClassifier(nn.Module):
         # Embedding layer
         self.embedding = nn.Embedding(vocab_size, dim)
         
-        # Memory prefix (conditional)
+        # Titan Long-Term Memory (conditional)
         if not no_memory:
-            self.memory_prefix = MemoryPrefix(dim, n_mem)
+            self.long_term_memory = TitanLongTermMemory(
+                dim=dim,
+                memory_dim=min(128, dim // 2),  # Adaptive memory dimension
+                segment_size=64,  # Process in 64-token segments
+                momentum=0.9
+            )
         else:
-            self.memory_prefix = None
+            self.long_term_memory = None
         
         # Transformer blocks with ablation flags
         self.blocks = nn.ModuleList([
@@ -230,38 +194,40 @@ class TitanClassifier(nn.Module):
         
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Forward pass.
+        Forward pass with Titan Long-Term Memory.
         
         Args:
             x: Input token IDs [B, L]
             
         Returns:
-            h_tokens_out: States for original tokens only [B, L, C] (strip memory)
-            rep: Summary vector [B, C] (use last position after memory as query-like summary)
+            h_tokens_out: Memory-enhanced token states [B, L, C]
+            rep: Summary vector [B, C] (global pooling of memory-enhanced states)
         """
         B, L = x.shape
         
         # Embedding
         h = self.embedding(x)  # [B, L, C]
         
-        # Add memory prefix (conditional)
-        if not self.no_memory:
-            h = self.memory_prefix(h)  # [B, n_mem + L, C]
+        # Apply long-term memory if enabled
+        if self.long_term_memory is not None:
+            h = self.long_term_memory(h)  # [B, L, C] - memory-enhanced
         
-        # Apply transformer blocks
+        # Pass through transformer blocks
         for block in self.blocks:
-            h = block(h)  # [B, n_mem + L, C] or [B, L, C] if no memory
+            h = block(h)  # [B, L, C]
         
         # Final layer norm
-        h = self.final_norm(h)  # [B, n_mem + L, C] or [B, L, C] if no memory
+        h = self.final_norm(h)  # [B, L, C]
         
-        # Strip memory slots to get original token states (or use all if no memory)
-        if not self.no_memory:
-            h_tokens_out = h[:, self.n_mem:]  # [B, L, C]
-        else:
-            h_tokens_out = h  # [B, L, C]
+        # Token representations are the full sequence
+        h_tokens_out = h  # [B, L, C]
         
-        # Use last position after memory as summary (query-like summary)
-        rep = h[:, -1]  # [B, C] - last position
+        # Summary representation: attention-weighted pooling
+        # This gives more weight to important positions for needle detection
+        attention_weights = torch.softmax(
+            torch.norm(h, dim=-1), dim=-1
+        ).unsqueeze(-1)  # [B, L, 1]
+        
+        rep = (h * attention_weights).sum(dim=1)  # [B, C]
         
         return h_tokens_out, rep
