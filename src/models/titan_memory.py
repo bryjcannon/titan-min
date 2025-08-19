@@ -174,6 +174,11 @@ class NeuralMemoryModule(nn.Module):
         # Output projection back to model dimension
         self.output_proj = nn.Linear(memory_dim, dim)
         
+        # Key and Value projections for the paper's loss function
+        # W_K and W_V are hyperparameters (not optimized in inner loop)
+        self.key_proj = nn.Linear(dim, memory_dim, bias=False)
+        self.value_proj = nn.Linear(dim, memory_dim, bias=False)
+        
         # Forgetting gate network: computes α_t ∈ [0,1] for adaptive forgetting
         self.forget_gate = nn.Sequential(
             nn.Linear(dim, dim // 4),
@@ -212,17 +217,23 @@ class NeuralMemoryModule(nn.Module):
         if surprising_tokens.size(0) == 0:
             return
         
-        # Compute memory encoding for surprising tokens
+        # Compute memory encoding for surprising tokens using paper's key-value loss
         with torch.enable_grad():
             # Temporarily enable gradients for memory network
             for param in self.memory_net.parameters():
                 param.requires_grad_(True)
             
-            memory_encoding = self.memory_net(surprising_tokens)  # [N, memory_dim]
+            # Generate keys and values from surprising tokens
+            # W_K and W_V are hyperparameters (not optimized in inner loop)
+            with torch.no_grad():
+                k_t = self.key_proj(surprising_tokens)    # [N, memory_dim] - keys
+                v_t = self.value_proj(surprising_tokens)  # [N, memory_dim] - values
             
-            # Simple reconstruction loss to encourage memory to encode input
-            reconstructed = self.output_proj(memory_encoding)  # [N, C]
-            loss = F.mse_loss(reconstructed, surprising_tokens)
+            # Memory module prediction: M_{t-1}(k_t)
+            memory_prediction = self.memory_net(k_t)  # [N, memory_dim]
+            
+            # Paper's loss function: ℓ(M_{t-1}; x_t) = ||M_{t-1}(k_t) - v_t||²₂
+            loss = F.mse_loss(memory_prediction, v_t, reduction='sum')
             
             # Compute gradients
             grads = torch.autograd.grad(loss, self.memory_net.parameters(), 
