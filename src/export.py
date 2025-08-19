@@ -75,7 +75,17 @@ def export_model(checkpoint_path):
     )
     
     # Load model state
-    model.load_state_dict(checkpoint['model_state_dict'])
+    state_dict = checkpoint['model_state_dict']
+    
+    # Verify architecture consistency (optional debug info)
+    if 'long_term_memory.surprise_tracker.past_surprise' in state_dict:
+        checkpoint_shape = state_dict['long_term_memory.surprise_tracker.past_surprise'].shape
+        model_shape = model.long_term_memory.surprise_tracker.past_surprise.shape
+        print(f"past_surprise buffer shapes - Checkpoint: {checkpoint_shape}, Model: {model_shape}")
+        if checkpoint_shape != model_shape:
+            print(f"Warning: Shape mismatch detected, but proceeding with load...")
+    
+    model.load_state_dict(state_dict)
     model.eval()
     
     print(f"Model loaded with {sum(p.numel() for p in model.parameters()):,} parameters")

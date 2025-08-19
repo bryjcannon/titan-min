@@ -1,8 +1,8 @@
 {
-  "best_val_acc": 0.343,
-  "best_epoch": 1,
-  "best_train_acc": 0.33975,
-  "best_val_loss": 2.9843719138039484,
+  "best_val_acc": 0.347,
+  "best_epoch": 4,
+  "best_train_acc": 0.339375,
+  "best_val_loss": 2.9843934074280756,
   "vocab_size": 128,
   "dim": 256,
   "n_heads": 8,

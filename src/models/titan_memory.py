@@ -40,7 +40,8 @@ class SurpriseTracker(nn.Module):
         )
         
         # Running surprise state (momentum term)
-        self.register_buffer('past_surprise', torch.zeros(1, dim))
+        # Shape: [1, 1, dim] to match the 3D operations in the forward pass
+        self.register_buffer('past_surprise', torch.zeros(1, 1, dim))
         
     def compute_momentary_surprise(self, x: torch.Tensor, model_output: torch.Tensor, loss_fn=None) -> torch.Tensor:
         """
