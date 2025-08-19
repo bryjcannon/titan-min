@@ -17,6 +17,12 @@ LAYERS=2
 N_MEM=4
 OUT_DIR="artifacts/run1"
 
+# TitanLongTermMemory specific parameters
+MEMORY_DIM=128
+SEGMENT_SIZE=64
+N_PERSISTENT=8
+SURPRISE_THRESHOLD=0.8
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -81,6 +87,8 @@ required_files = [
     'src/utils/__init__.py',
     'src/utils/checkpoint.py',
     'src/train.py',
+    'src/train_titan_memory.py',
+    'src/models/titan_memory.py',
     'src/export.py',
     'src/infer.py',
     'src/eval.py',
@@ -101,23 +109,31 @@ else:
 "
 print_success "Project structure verified"
 
-# Step 1: Training
-print_step "Training model (${EPOCHS} epochs)"
+# Step 1: Training with TitanLongTermMemory
+print_step "Training model with TitanLongTermMemory (${EPOCHS} epochs)"
 echo "Configuration:"
 echo "  - Dimensions: ${DIM}"
 echo "  - Attention heads: ${HEADS}"
 echo "  - Layers: ${LAYERS}"
 echo "  - Memory slots: ${N_MEM}"
+echo "  - Memory dimension: ${MEMORY_DIM}"
+echo "  - Segment size: ${SEGMENT_SIZE}"
+echo "  - Persistent memory: ${N_PERSISTENT}"
+echo "  - Surprise threshold: ${SURPRISE_THRESHOLD}"
 echo "  - Output directory: ${OUT_DIR}"
 echo ""
 
-python -m src.train \
+python -m src.train_titan_memory \
     --out_dir ${OUT_DIR} \
     --epochs ${EPOCHS} \
     --dim ${DIM} \
     --heads ${HEADS} \
     --layers ${LAYERS} \
-    --n_mem ${N_MEM}
+    --n_mem ${N_MEM} \
+    --memory_dim ${MEMORY_DIM} \
+    --segment_size ${SEGMENT_SIZE} \
+    --n_persistent ${N_PERSISTENT} \
+    --surprise_threshold ${SURPRISE_THRESHOLD}
 
 print_success "Training completed"
 
