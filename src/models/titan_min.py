@@ -86,6 +86,9 @@ class TitanBlock(nn.Module):
         # Output projection
         self.out_proj = nn.Linear(dim, dim)
         
+        # Temperature parameter for cosine attention
+        self.temperature = nn.Parameter(torch.ones(1) * math.sqrt(self.head_dim))
+        
         # Final layer norm for stability
         self.final_norm = nn.LayerNorm(dim)
         
@@ -94,28 +97,28 @@ class TitanBlock(nn.Module):
         B, L, C = x.shape
         residual = x
         
-        # Q, K, V projections with configurable activation
-        q = self.activation(self.q_proj(x))  # [B, L, C]
-        k = self.activation(self.k_proj(x))  # [B, L, C]
-        v = self.activation(self.v_proj(x))  # [B, L, C]
+        # Q, K, V projections with SiLU activation as specified in Titan paper
+        q = self.activation(self.q_proj(x))  # [B, L, C] - SiLU activation
+        k = self.activation(self.k_proj(x))  # [B, L, C] - SiLU activation
+        v = self.activation(self.v_proj(x))  # [B, L, C] - SiLU activation
         
         # Apply depthwise separable convolutions (or identity if disabled)
         q = self.q_conv(q)
         k = self.k_conv(k)
         v = self.v_conv(v)
         
-        # L2 normalize Q and K over last dimension (conditional)
-        if not self.no_l2:
-            q = F.normalize(q, p=2, dim=-1)
-            k = F.normalize(k, p=2, dim=-1)
-        
-        # Reshape for multi-head attention
+        # Reshape for multi-head attention FIRST
         q = q.view(B, L, self.n_heads, self.head_dim).transpose(1, 2)  # [B, n_heads, L, head_dim]
         k = k.view(B, L, self.n_heads, self.head_dim).transpose(1, 2)  # [B, n_heads, L, head_dim]
         v = v.view(B, L, self.n_heads, self.head_dim).transpose(1, 2)  # [B, n_heads, L, head_dim]
         
-        # Attention scores
-        scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)  # [B, n_heads, L, L]
+        # Per-head L2 normalization for cosine attention (conditional)
+        if not self.no_l2:
+            q = F.normalize(q, p=2, dim=-1)  # [B, n_heads, L, head_dim]
+            k = F.normalize(k, p=2, dim=-1)  # [B, n_heads, L, head_dim]
+        
+        # Cosine attention scores with temperature scaling
+        scores = torch.matmul(q, k.transpose(-2, -1)) / self.temperature  # [B, n_heads, L, L]
         
         # Softmax
         attn_weights = F.softmax(scores, dim=-1)
