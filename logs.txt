@@ -345,7 +345,198 @@ Best validation accuracy: 0.0120 at epoch 3
 Artifacts saved to: artifacts/run1
 (.venv) (base) bryjc@Bryans-MacBook-Pro titan-min % 
 
+RUN2
 
+(.venv) (base) bryjc@Bryans-MacBook-Pro titan-min % ./run_pipeline.sh
+🚀 Starting Titan-Min ML Pipeline
+=================================
+📋 Step: Activating virtual environment
+✅ Virtual environment activated
+📋 Step: Checking dependencies
+PyTorch version: 2.8.0
+✅ Dependencies verified
+📋 Step: Verifying project structure
+✓ All required files present
+✅ Project structure verified
+📋 Step: Training model with TitanLongTermMemory (4 epochs)
+Configuration:
+  - Dimensions: 256
+  - Attention heads: 8
+  - Layers: 2
+  - Memory slots: 4
+  - Memory dimension: 128
+  - Segment size: 64
+  - Persistent memory: 8
+  - Surprise threshold: 0.8
+  - Memory learning rate: 0.01
+  - Output directory: artifacts/run1
+
+Using device: cpu
+Creating datasets...
+Train samples: 8000
+Val samples: 1000
+Test samples: 1000
+Creating TitanClassifier with Long-Term Memory...
+Memory configured: dim=128, segment_size=64, persistent_slots=8
+Model created with 2,014,085 parameters
+Config saved to artifacts/run1/config.json
+
+Epoch 1/4
+Training: 100%|████████████████████████████████████████████████████████████| 500/500 [14:48<00:00,  1.78s/it, loss=3.5957, acc=0.3397]
+Train Loss: 3.0298, Train Acc: 0.3397                                                                                                 
+Val Loss: 2.9844, Val Acc: 0.3430
+New best validation accuracy: 0.3430
+
+Epoch 2/4
+Training:  68%|███████████████████████                                                                    █████████████████▌                   |                                                                                                                                         338/500 [10:02<05:55,  2.19s/it, loss                            Training:  68%|███████████████████████                                                                                                █████████████████▋                   |                                                                                                                                                                     339/500 [10:02<05:37,  2.10s/it, loss                                                        Training:  68%|███████████████████████                                                                                                                            █████████████████▋                   |                 339/500 [10:04<05:37,  2.10s/it, loss                                                                                    Training:  68%|███████████████████████                                                                                                                                                        █████████████████▊                   |                                             340/500 [10:04<05:19,  2.00s/it, loss                                                                                                                Training:  68%|███████████████████████    █████████████████▊                   |                                                                         340/500 [10:06<05:19,  2.00s/it, loss                                                                                                                                            Training:  68%|███████████████████████                                █████████████████▉                   |                                                                                                     341/500 [10:06<05:08,  1.94s/it, loss                                                                                                                                                                        Training:  68%|███████████████████████                                                            █████████████████▉                   |                                                                                                                                 341/500 [10:08<05:08,  1.94s/it, loss                    Training:  68%|███████████████████████                                                                                        ██████████████████                   |                                                                                                                                                             342/500 [10:08<04:59,  1.89s/it, loss                                                Training: 100%|████████████████████████████████████████████████████████████| 500/500 [14:50<00:00,  1.78s/it, loss=2.7721, acc=0.3421]
+Train Loss: 3.0075, Train Acc: 0.3421                                                                                                                                                                                                               
+Val Loss: 2.9841, Val Acc: 0.3410
+
+Epoch 3/4
+Training: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [29:58<00:00,  3.60s/it, loss=3.4224, acc=0.3402]
+Train Loss: 3.0133, Train Acc: 0.3402                                                                                                                                                                                                               
+Val Loss: 2.9844, Val Acc: 0.3440
+New best validation accuracy: 0.3440
+
+Epoch 4/4
+Training: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [1:18:18<00:00,  9.40s/it, loss=3.3358, acc=0.3394]
+Train Loss: 3.0087, Train Acc: 0.3394                                                                                                                                                                                                               
+Val Loss: 2.9844, Val Acc: 0.3470
+New best validation accuracy: 0.3470
+
+Training completed!
+Best validation accuracy: 0.3470 at epoch 4
+Artifacts saved to: artifacts/run1
+                                                                                                                                                                                                                                                    
+Final Test Results:
+Test Loss: 3.1013, Test Acc: 0.3210
+✅ Training completed
+📋 Step: Exporting model to TorchScript
+Loading checkpoint from: artifacts/run1/best.ckpt
+Reconstructing TitanClassifier from config: {'vocab_size': 128, 'dim': 256, 'n_heads': 8, 'n_layers': 2, 'n_mem': 4, 'lr': 0.0005, 'weight_decay': 0.01, 'batch_size': 16, 'epochs': 4, 'seed': 42, 'memory_dim': 128, 'segment_size': 64, 'memory_lr': 0.01, 'n_persistent': 8, 'reset_memory_each_epoch': False, 'no_memory': False, 'no_dsconv': False, 'no_l2': False, 'activation': 'silu'}
+Export failed: Error(s) in loading state_dict for TitanClassifier:
+        size mismatch for long_term_memory.surprise_tracker.past_surprise: copying a param with shape torch.Size([1, 1, 256]) from checkpoint, the shape in current model is torch.Size([1, 256]).
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/Users/bryjc/CascadeProjects/Titan_Impl_Proj/titan-min/src/export.py", line 159, in <module>
+    main()
+  File "/Users/bryjc/CascadeProjects/Titan_Impl_Proj/titan-min/src/export.py", line 152, in main
+    export_model(args.ckpt)
+  File "/Users/bryjc/CascadeProjects/Titan_Impl_Proj/titan-min/src/export.py", line 78, in export_model
+    model.load_state_dict(checkpoint['model_state_dict'])
+  File "/Users/bryjc/CascadeProjects/Titan_Impl_Proj/titan-min/.venv/lib/python3.9/site-packages/torch/nn/modules/module.py", line 2624, in load_state_dict
+    raise RuntimeError(
+RuntimeError: Error(s) in loading state_dict for TitanClassifier:
+        size mismatch for long_term_memory.surprise_tracker.past_surprise: copying a param with shape torch.Size([1, 1, 256]) from checkpoint, the shape in current model is torch.Size([1, 256]).
+(.venv) (base) bryjc@Bryans-MacBook-Pro titan-min % python -m src.export --ckpt ${OUT_DIR}/best.ckpt
+Export failed: Checkpoint not found: /best.ckpt
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/Users/bryjc/CascadeProjects/Titan_Impl_Proj/titan-min/src/export.py", line 169, in <module>
+    main()
+  File "/Users/bryjc/CascadeProjects/Titan_Impl_Proj/titan-min/src/export.py", line 162, in main
+    export_model(args.ckpt)
+  File "/Users/bryjc/CascadeProjects/Titan_Impl_Proj/titan-min/src/export.py", line 54, in export_model
+    raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
+FileNotFoundError: Checkpoint not found: /best.ckpt
+(.venv) (base) bryjc@Bryans-MacBook-Pro titan-min % OUT_DIR="artifacts/run1"
+(.venv) (base) bryjc@Bryans-MacBook-Pro titan-min % python -m src.export --ckpt ${OUT_DIR}/best.ckpt
+Loading checkpoint from: artifacts/run1/best.ckpt
+Reconstructing TitanClassifier from config: {'vocab_size': 128, 'dim': 256, 'n_heads': 8, 'n_layers': 2, 'n_mem': 4, 'lr': 0.0005, 'weight_decay': 0.01, 'batch_size': 16, 'epochs': 4, 'seed': 42, 'memory_dim': 128, 'segment_size': 64, 'memory_lr': 0.01, 'n_persistent': 8, 'reset_memory_each_epoch': False, 'no_memory': False, 'no_dsconv': False, 'no_l2': False, 'activation': 'silu'}
+past_surprise buffer shapes - Checkpoint: torch.Size([1, 1, 256]), Model: torch.Size([1, 1, 256])
+Model loaded with 2,014,085 parameters
+Creating example inputs for tracing...
+Tracing model with torch.jit.trace...
+/Users/bryjc/CascadeProjects/Titan_Impl_Proj/titan-min/src/models/titan_memory.py:356: TracerWarning: Converting a tensor to a Python boolean might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  if L <= self.segment_size:
+/Users/bryjc/CascadeProjects/Titan_Impl_Proj/titan-min/src/models/titan_memory.py:363: TracerWarning: Converting a tensor to a Python boolean might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  end = min(start + self.segment_size, L)
+Saving TorchScript model to: artifacts/run1/model_scripted.pt
+Saving export manifest to: artifacts/run1/export_manifest.json
+
+Export completed successfully!
+TorchScript model: artifacts/run1/model_scripted.pt
+Export manifest: artifacts/run1/export_manifest.json
+
+Testing exported model...
+Test output shape: torch.Size([2, 128])
+Test output range: [-inf, 119.4881]
+(.venv) (base) bryjc@Bryans-MacBook-Pro titan-min % OUT_DIR="artifacts/run1"
+(.venv) (base) bryjc@Bryans-MacBook-Pro titan-min % python -m src.eval --ckpt ${OUT_DIR}/best.ckpt
+
+Using device: cpu
+Loading model from checkpoint: artifacts/run1/best.ckpt
+Model loaded with 2,014,085 parameters
+Creating test dataset...
+Test samples: 1000
+
+Evaluating model on test set...
+Evaluating: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 32/32 [00:35<00:00,  1.09s/it]
+
+=== Evaluation Results ===
+Overall Accuracy: 0.3210
+
+Accuracy by Sequence Length:
+  Length 64: 0.0123
+  Length 128: 0.0083
+  Length 256: 1.0000
+
+Accuracy by Position Bin:
+  0-20%: 0.3285
+  20-40%: 0.2617
+  40-60%: 0.3113
+  60-80%: 0.3918
+  80-100%: 0.3179
+
+Total samples evaluated: 1000
+Report saved to: artifacts/run1/report.json
+(.venv) (base) bryjc@Bryans-MacBook-Pro titan-min % python -m src.dump_test_preds --ckpt ${OUT_DIR}/best.ckpt
+
+Using device: cpu
+Loading model from checkpoint: artifacts/run1/best.ckpt
+Model loaded with 2,014,085 parameters
+Creating test dataset...
+Test samples: 1000
+
+Generating predictions...
+Generating predictions: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 32/32 [00:35<00:00,  1.11s/it]
+Predictions saved to: artifacts/run1/predictions.csv
+Total rows written: 1001 (header + 1000 samples)
+
+=== Verification ===
+CSV file exists: artifacts/run1/predictions.csv
+Total rows in CSV: 1001 (expected: 1001)
+Samples processed: 1000 (expected: 1000)
+✓ CSV format is correct (1001 rows = header + 1000 samples)
+(.venv) (base) bryjc@Bryans-MacBook-Pro titan-min % python -m src.viz --report ${OUT_DIR}/report.json
+
+Loaded report from: artifacts/run1/report.json
+Overall accuracy: 0.3210
+
+Generating visualizations...
+Total samples: 1000
+Showing Plot 1: Accuracy vs Sequence Length
+Showing Plot 2: Accuracy vs Position Bins
+
+Visualization complete!
+(.venv) (base) bryjc@Bryans-MacBook-Pro titan-min % print_step "Running sample inference"
+echo "Testing with sequence: [1,2,3,127,4,5,6] (needle token 127 at position 3)"
+python -m src.infer --ckpt ${OUT_DIR}/best.ckpt --seq "1,2,3,127,4,5,6"
+print_success "Inference completed"
+zsh: command not found: print_step
+Testing with sequence: [1,2,3,127,4,5,6] (needle token 127 at position 3)
+Input sequence length: 7
+Input tokens: [1, 2, 3, 127, 4, 5, 6]
+Loading model from checkpoint: artifacts/run1/best.ckpt
+Model loaded with 2,014,085 parameters
+Predicted needle index: 3
+zsh: command not found: print_success
 
 ---
 ---
