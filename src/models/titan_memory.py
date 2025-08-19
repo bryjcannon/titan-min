@@ -17,11 +17,12 @@ class SurpriseTracker(nn.Module):
     Implements the surprise metric from Equation 9 in the Titan paper.
     """
     
-    def __init__(self, dim: int, momentum: float = 0.9, eps: float = 1e-8):
+    def __init__(self, dim: int, momentum: float = 0.9, eps: float = 1e-8, surprise_threshold: float = 0.8):
         super().__init__()
         self.dim = dim
         self.momentum = momentum
         self.eps = eps
+        self.surprise_threshold = surprise_threshold
         
         # Learnable data-dependent decay and incorporation parameters
         self.eta_net = nn.Sequential(
@@ -270,7 +271,7 @@ class NeuralMemoryModule(nn.Module):
         B, L, C = x.shape
         
         # Encode through memory network
-        x_flat = x.view(-1, C)  # [B*L, C]
+        x_flat = x.reshape(-1, C)  # [B*L, C] - use reshape to handle non-contiguous tensors
         memory_encoded = self.memory_net(x_flat)  # [B*L, memory_dim]
         
         # Add memory state as context
@@ -279,7 +280,7 @@ class NeuralMemoryModule(nn.Module):
         
         # Project back to model dimension
         output = self.output_proj(enhanced_memory)  # [B*L, C]
-        output = output.view(B, L, C)  # [B, L, C]
+        output = output.reshape(B, L, C)  # [B, L, C] - use reshape for consistency
         
         return output
 
@@ -297,7 +298,8 @@ class TitanLongTermMemory(nn.Module):
         n_memory_layers: int = 2,
         segment_size: int = 64,
         momentum: float = 0.9,
-        n_persistent: int = 4  # Number of persistent memory slots
+        n_persistent: int = 4,  # Number of persistent memory slots
+        surprise_threshold: float = 0.8  # Surprise threshold for memory updates
     ):
         super().__init__()
         self.dim = dim
@@ -312,7 +314,7 @@ class TitanLongTermMemory(nn.Module):
         )
         
         # Core components
-        self.surprise_tracker = SurpriseTracker(dim, momentum=momentum)
+        self.surprise_tracker = SurpriseTracker(dim, momentum=momentum, surprise_threshold=surprise_threshold)
         self.memory_module = NeuralMemoryModule(dim, memory_dim, n_memory_layers)
         
         # Query-Key-Value for memory retrieval
@@ -389,15 +391,9 @@ class TitanLongTermMemory(nn.Module):
         queries = self.query_proj(segment)  # [B, seg_len, C]
         
         # Step 2: Retrieve from long-term memory using paper's specification: y_t = M*(q_t)
-        # Use the trained memory network to directly process queries
-        B, seg_len, C = queries.shape
-        queries_flat = queries.view(-1, C)  # [B*seg_len, C]
-        
-        # Direct retrieval using memory network: y_t = M*(q_t)
+        # Use the trained memory network to directly process queries (keep as 3D)
         with torch.no_grad():  # Memory retrieval doesn't update memory weights
-            retrieved_flat = self.memory_module(queries_flat)  # [B*seg_len, C]
-        
-        retrieved_memory = retrieved_flat.view(B, seg_len, C)  # [B, seg_len, C]
+            retrieved_memory = self.memory_module(queries)  # [B, seg_len, C]
         
         # Step 3: Assemble context as [persistent_memory, retrieved_memory, current_segment]
         persistent_expanded = self.persistent_memory.expand(B, -1, -1)  # [B, n_persistent, C]
@@ -438,7 +434,7 @@ class TitanLongTermMemory(nn.Module):
         self.memory_module.update_memory_online(y_t, surprise)
         
         # Step 8: Process y_t through memory module to get final representation
-        memory_processed = self.memory_module(y_t.unsqueeze(1)).squeeze(1)  # Process as single "segment"
+        memory_processed = self.memory_module(y_t)  # y_t is already [B, seg_len, C]
         
         # Step 9: Final output projection with residual connection
         output = self.output_proj(memory_processed + segment)

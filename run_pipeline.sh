@@ -22,6 +22,7 @@ MEMORY_DIM=128
 SEGMENT_SIZE=64
 N_PERSISTENT=8
 SURPRISE_THRESHOLD=0.8
+MEMORY_LR=0.01
 
 # Colors for output
 RED='\033[0;31m'
@@ -120,6 +121,7 @@ echo "  - Memory dimension: ${MEMORY_DIM}"
 echo "  - Segment size: ${SEGMENT_SIZE}"
 echo "  - Persistent memory: ${N_PERSISTENT}"
 echo "  - Surprise threshold: ${SURPRISE_THRESHOLD}"
+echo "  - Memory learning rate: ${MEMORY_LR}"
 echo "  - Output directory: ${OUT_DIR}"
 echo ""
 
@@ -133,7 +135,8 @@ python -m src.train_titan_memory \
     --memory_dim ${MEMORY_DIM} \
     --segment_size ${SEGMENT_SIZE} \
     --n_persistent ${N_PERSISTENT} \
-    --surprise_threshold ${SURPRISE_THRESHOLD}
+    --surprise_threshold ${SURPRISE_THRESHOLD} \
+    --memory_lr ${MEMORY_LR}
 
 print_success "Training completed"
 

@@ -1,0 +1,43 @@
+{
+  "source_checkpoint": "artifacts/run1/best.ckpt",
+  "model_config": {
+    "vocab_size": 128,
+    "dim": 256,
+    "n_heads": 8,
+    "n_layers": 2,
+    "n_mem": 4,
+    "lr": 0.0001,
+    "weight_decay": 0.01,
+    "batch_size": 32,
+    "epochs": 4,
+    "seed": 42,
+    "no_memory": false,
+    "no_dsconv": false,
+    "no_l2": false,
+    "activation": "silu"
+  },
+  "export_format": "torchscript",
+  "model_class": "NeedleFinder",
+  "input_shape": {
+    "x": [
+      "batch_size",
+      "sequence_length"
+    ],
+    "lengths": [
+      "batch_size"
+    ]
+  },
+  "output_shape": [
+    "batch_size",
+    "sequence_length"
+  ],
+  "example_input_shapes": {
+    "x": [
+      2,
+      128
+    ],
+    "lengths": [
+      2
+    ]
+  }
+}

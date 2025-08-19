@@ -129,4 +129,5 @@ dmypy.json
 .pyre/
 
 # Project-specific
-artifacts/
+# artifacts/
+TITAN_IMPLEMENTATION_ANALYSIS.md

@@ -42,6 +42,7 @@ def parse_args():
     parser.add_argument("--segment_size", type=int, default=64, help="Memory segment size")
     parser.add_argument("--memory_lr", type=float, default=0.01, help="Online memory learning rate")
     parser.add_argument("--n_persistent", type=int, default=4, help="Number of persistent memory slots")
+    parser.add_argument("--surprise_threshold", type=float, default=0.8, help="Surprise threshold for memory updates")
     parser.add_argument("--reset_memory_each_epoch", action="store_true", help="Reset memory state between epochs")
     
     # Ablation arguments
@@ -216,7 +217,8 @@ def main():
         no_memory=args.no_memory,
         no_dsconv=args.no_dsconv,
         no_l2=args.no_l2,
-        activation=args.act
+        activation=args.act,
+        surprise_threshold=args.surprise_threshold
     ).to(device)
     
     # Override memory configuration if using memory

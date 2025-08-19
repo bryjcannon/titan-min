@@ -1,0 +1,21 @@
+{
+  "vocab_size": 128,
+  "dim": 256,
+  "n_heads": 8,
+  "n_layers": 2,
+  "n_mem": 4,
+  "lr": 0.0005,
+  "weight_decay": 0.01,
+  "batch_size": 16,
+  "epochs": 4,
+  "seed": 42,
+  "memory_dim": 128,
+  "segment_size": 64,
+  "memory_lr": 0.01,
+  "n_persistent": 8,
+  "reset_memory_each_epoch": false,
+  "no_memory": false,
+  "no_dsconv": false,
+  "no_l2": false,
+  "activation": "silu"
+}

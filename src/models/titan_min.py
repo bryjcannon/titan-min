@@ -168,7 +168,8 @@ class TitanClassifier(nn.Module):
         no_memory: bool = False,
         no_dsconv: bool = False,
         no_l2: bool = False,
-        activation: str = 'silu'
+        activation: str = 'silu',
+        surprise_threshold: float = 0.8
     ):
         super().__init__()
         self.vocab_size = vocab_size
@@ -187,7 +188,8 @@ class TitanClassifier(nn.Module):
                 dim=dim,
                 memory_dim=min(128, dim // 2),  # Adaptive memory dimension
                 segment_size=64,  # Process in 64-token segments
-                momentum=0.9
+                momentum=0.9,
+                surprise_threshold=surprise_threshold
             )
         else:
             self.long_term_memory = None
