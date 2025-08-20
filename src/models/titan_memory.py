@@ -395,6 +395,14 @@ class TitanLongTermMemory(nn.Module):
         # Use the trained memory network to directly process queries (keep as 3D)
         with torch.no_grad():  # Memory retrieval doesn't update memory weights
             retrieved_memory = self.memory_module(queries)  # [B, seg_len, C]
+            
+            # ANTI-OVERFITTING FIX: Add noise to memory retrieval during training
+            # This prevents the model from exploiting deterministic cross-segment patterns
+            # that cause 100% accuracy on length 256 (4 segments)
+            if self.training:
+                noise_scale = 0.01  # Small noise to disrupt patterns without breaking functionality
+                memory_noise = torch.randn_like(retrieved_memory) * noise_scale
+                retrieved_memory = retrieved_memory + memory_noise
         
         # Step 3: Assemble context as [persistent_memory, retrieved_memory, current_segment]
         persistent_expanded = self.persistent_memory.expand(B, -1, -1)  # [B, n_persistent, C]

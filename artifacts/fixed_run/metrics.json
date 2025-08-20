@@ -1,0 +1,10 @@
+{
+  "best_val_acc": 0.349,
+  "best_epoch": 1,
+  "best_train_acc": 0.33925,
+  "best_val_loss": 2.984359657953656,
+  "no_memory": false,
+  "no_dsconv": false,
+  "no_l2": false,
+  "activation": "silu"
+}
